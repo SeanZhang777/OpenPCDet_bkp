@@ -13,16 +13,15 @@ INFO_PATH: {
     'test': [maxus_infos_val.pkl],
 }
 
-FOV_POINTS_ONLY: True
-
+BALANCED_RESAMPLING: True
 
 DATA_AUGMENTOR:
     DISABLE_AUG_LIST: ['placeholder']
     AUG_CONFIG_LIST:
         - NAME: gt_sampling
-          USE_ROAD_PLANE: True
+          USE_ROAD_PLANE: False
           DB_INFO_PATH:
-              - kitti_dbinfos_train.pkl
+              - maxus_dbinfos_train.pkl
           PREPARE: {
              filter_by_min_points: ['Car:15', 'Large_vehicle:20', 'Pedestrian:5', 'Cyclist:5'],
              filter_by_difficulty: [-1],
