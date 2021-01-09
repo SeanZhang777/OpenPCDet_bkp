@@ -487,10 +487,10 @@ def get_mAP_eval_result(gt_annos,
         # mAP threshold array: [num_minoverlap, metric, class]
         # mAP result: [num_class, num_diff, num_minoverlap]
         class_name = class_to_name[curcls]
-        detail[class_name] = {}
+        # detail[class_name] = {}
         for i in range(min_overlaps.shape[0]):
             mAP3d = get_mAP(metrics["3d"]["precision"][j, :, i])
-            detail[class_name][f"3d@{min_overlaps[i, 0, j]:.2f}"] = mAP3d.tolist()
+            detail[f"{class_name}: 3d@{min_overlaps[i, 0, j]:.2f}"] = mAP3d.tolist()
 
             result += print_str(
                 (f"{class_to_name[curcls]} "
@@ -499,7 +499,7 @@ def get_mAP_eval_result(gt_annos,
             result += print_str(f"3d   AP:{mAP3d}")
             if compute_aos:
                 mAPaos = get_mAP(metrics["3d"]["orientation"][j, :, i])
-                detail[class_name][f"aos"] = mAPaos.tolist()
+                detail[f"{class_name}: aos"] = mAPaos.tolist()
                 mAPaos = ", ".join(f"{v:.2f}" for v in mAPaos)
                 result += print_str(f"aos  AP:{mAPaos}")
     return result, detail
@@ -709,10 +709,10 @@ def get_maxus_eval_result(gt_annos,
         # mAP threshold array: [num_minoverlap, metric, class]
         # mAP result: [num_class, num_diff, num_minoverlap]
         class_name = class_to_name[curcls]
-        detail[class_name] = {}
+        # detail[class_name] = {}
         for i in range(min_overlaps.shape[0]):
             mAP3d = get_mAP(metrics["3d"]["precision"][j, :, i])
-            detail[class_name][f"3d@{min_overlaps[i, 0, j]:.2f}"] = mAP3d.tolist()
+            detail[f"{class_name}: 3d@{min_overlaps[i, 0, j]:.2f}"] = mAP3d.tolist()
 
             result += print_str(
                 (f"{class_to_name[curcls]} "
@@ -721,7 +721,7 @@ def get_maxus_eval_result(gt_annos,
             result += print_str(f"3d   AP:{mAP3d}")
             if compute_aos:
                 mAPaos = get_mAP(metrics["3d"]["orientation"][j, :, i])
-                detail[class_name][f"aos"] = mAPaos.tolist()
+                detail[f"{class_name}: aos"] = mAPaos.tolist()
                 mAPaos = ", ".join(f"{v:.2f}" for v in mAPaos)
                 result += print_str(f"aos  AP:{mAPaos}")
     return {
