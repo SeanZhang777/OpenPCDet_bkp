@@ -1,6 +1,8 @@
-import mayavi.mlab as mlab
+#import mayavi.mlab as mlab
+import open3d as o3d
 import numpy as np
 import torch
+
 
 box_colormap = [
     [1, 1, 1],
@@ -157,7 +159,7 @@ def draw_scenes(points, gt_boxes=None, ref_boxes=None, ref_scores=None, ref_labe
         corners3d = boxes_to_corners_3d(gt_boxes)
         fig = draw_corners3d(corners3d, fig=fig, color=(0, 0, 1), max_num=100)
 
-    if ref_boxes is not None and len(ref_boxes) > 0:
+    if ref_boxes is not None:
         ref_corners3d = boxes_to_corners_3d(ref_boxes)
         if ref_labels is None:
             fig = draw_corners3d(ref_corners3d, fig=fig, color=(0, 1, 0), cls=ref_scores, max_num=100)
@@ -213,3 +215,30 @@ def draw_corners3d(corners3d, fig, color=(1, 1, 1), line_width=2, cls=None, tag=
                     line_width=line_width, figure=fig)
 
     return fig
+
+def draw_scenes_o3d(points, ref_boxes=None, ref_labels=None, window_name="Open3D", color=[0, 0, 0]):
+    pxyz = points[:, :3]
+    pc = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(pxyz))
+    colors = np.array(color)
+    colors = np.tile(colors, (pxyz.shape[0], 1))
+    pc.colors = o3d.utility.Vector3dVector(colors)
+    axis = o3d.geometry.TriangleMesh.create_coordinate_frame(size=2.0, origin=[0, 0, 0])
+    draw_list = [axis, pc]
+    if ref_boxes is not None:
+        obbs = draw_box_in_3d(ref_boxes, ref_labels)
+        draw_list.extend(obbs)
+    o3d.visualization.draw_geometries(draw_list, window_name=window_name)
+
+def draw_box_in_3d(boxes, labels):
+    #assert len(boxes) == len(labels), "boxes size not equal to labels size"
+    obj_color = [[0, 1, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1], [0, 0, 0]]
+    obbs = []
+    for i in range(len(boxes)):
+        box = boxes[i]
+        label = labels[i]
+        color = obj_color[label]
+        rot = o3d.geometry.get_rotation_matrix_from_axis_angle([0, 0, box[6]])
+        obb = o3d.geometry.OrientedBoundingBox(center=box[:3], R=rot, extent=box[[3, 4, 5]])
+        obb.color = color
+        obbs.append(obb)
+    return obbs

@@ -2,7 +2,7 @@ import argparse
 import glob
 from pathlib import Path
 
-import mayavi.mlab as mlab
+import open3d as o3d
 import numpy as np
 import torch
 
@@ -90,11 +90,13 @@ def main():
             load_data_to_gpu(data_dict)
             pred_dicts, _ = model.forward(data_dict)
 
-            V.draw_scenes(
-                points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
-                ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
+            points = data_dict['points'][:, 1:].cpu().numpy()
+            boxes = pred_dicts[0]['pred_boxes'].cpu().numpy()
+            labels = pred_dicts[0]['pred_labels'].cpu().numpy() - 1
+            V.draw_scenes_o3d(
+                points=points, ref_boxes=boxes,
+                ref_labels=labels
             )
-            mlab.show(stop=True)
 
     logger.info('Demo done.')
 
