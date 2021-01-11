@@ -8,10 +8,11 @@ import torch
 
 from pcdet.config import cfg, cfg_from_yaml_file
 from pcdet.datasets import DatasetTemplate
-from pcdet.models import build_network, load_data_to_gpu
+from pcdet.libtorch_models import build_network, model_fn_decorator
 from pcdet.utils import common_utils
 from visual_utils import visualize_utils as V
 
+import time
 
 class DemoDataset(DatasetTemplate):
     def __init__(self, dataset_cfg, class_names, training=True, root_path=None, logger=None, ext='.bin'):
@@ -48,8 +49,10 @@ class DemoDataset(DatasetTemplate):
             'points': points,
             'frame_id': index,
         }
-
+        start = time.time()
         data_dict = self.prepare_data(data_dict=input_dict)
+        end = time.time()
+        print("Preprocessing cost {} ms.".format((end - start) * 1000))
         return data_dict
 
 
@@ -83,12 +86,15 @@ def main():
     model.load_params_from_file(filename=args.ckpt, logger=logger, to_cpu=True)
     model.cuda()
     model.eval()
+    sm = torch.jit.script(model)
+    print(sm.code)
+    sm.save('../output/torch_pt/pointpillars.pt')
     with torch.no_grad():
         for idx, data_dict in enumerate(demo_dataset):
             logger.info(f'Visualized sample index: \t{idx + 1}')
             data_dict = demo_dataset.collate_batch([data_dict])
-            load_data_to_gpu(data_dict)
-            pred_dicts, _ = model.forward(data_dict)
+            model_fn = model_fn_decorator()
+            pred_dicts, _ = model_fn(model, data_dict, sm)
 
             points = data_dict['points'][:, 1:].cpu().numpy()
             boxes = pred_dicts[0]['pred_boxes'].cpu().numpy()
