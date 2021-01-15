@@ -5,10 +5,11 @@ from pathlib import Path
 import open3d as o3d
 import numpy as np
 import torch
+import torch.onnx
 
 from pcdet.config import cfg, cfg_from_yaml_file
 from pcdet.datasets import DatasetTemplate
-from pcdet.libtorch_models import build_network, model_fn_decorator
+from pcdet.onnx_models import build_network, model_fn_decorator
 from pcdet.utils import common_utils
 from visual_utils import visualize_utils as V
 
@@ -86,15 +87,13 @@ def main():
     model.load_params_from_file(filename=args.ckpt, logger=logger, to_cpu=True)
     model.cuda()
     model.eval()
-    sm = torch.jit.script(model)
-    print(sm.code)
-    sm.save('../output/torch_pt/pointpillars.pt')
+
     with torch.no_grad():
         for idx, data_dict in enumerate(demo_dataset):
             logger.info(f'Visualized sample index: \t{idx + 1}')
             data_dict = demo_dataset.collate_batch([data_dict])
             model_fn = model_fn_decorator()
-            pred_dicts, _ = model_fn(model, data_dict, sm)
+            pred_dicts, _ = model_fn(model, data_dict)
 
             points = data_dict['points'][:, 1:].cpu().numpy()
             boxes = pred_dicts[0]['pred_boxes'].cpu().numpy()
