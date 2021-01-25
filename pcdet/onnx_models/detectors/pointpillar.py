@@ -58,7 +58,7 @@ class PointPillar(nn.Module):
     def forward(self, voxels: torch.Tensor,
                       voxel_num_points: torch.Tensor,
                       coords: torch.Tensor) -> List[torch.Tensor]:
-        voxel_feature = self.vfe(voxels, voxel_num_points, coords)
+        voxel_feature = self.vfe(voxels)
         batch_spatial_features = self.map_to_bev(voxel_feature, coords)
         sp_feature2d = self.backbone_2d(batch_spatial_features)
         output_list = self.dense_head(sp_feature2d)

@@ -26,9 +26,11 @@ class PFNLayer(nn.Module):
 
     def forward(self, inputs: torch.Tensor):
         x = self.linear(inputs)
+        x = torch.squeeze(x)
         x = self.norm(x.permute(0, 2, 1)).permute(0, 2, 1) if self.use_norm else x
+        x = torch.unsqueeze(x, 1)
         x = F.relu(x)
-        x_max = torch.max(x, dim=1, keepdim=True)[0]
+        x_max = torch.max(x, dim=2, keepdim=True)[0]
 
         if self.last_vfe:
             return x_max
@@ -81,34 +83,9 @@ class PillarVFE(nn.Module):
         paddings_indicator = actual_num.int() > max_num
         return paddings_indicator
 
-    def forward(self, voxel_features: torch.Tensor,
-                      voxel_num_points: torch.Tensor,
-                      coords: torch.Tensor) -> List[torch.Tensor]:
-
-        points_mean = voxel_features[:, :, :3].sum(dim=1, keepdim=True) / voxel_num_points.type_as(voxel_features).view(-1, 1, 1)
-        f_cluster = voxel_features[:, :, :3] - points_mean
-
-        f_center_x = voxel_features[:, :, 0] - (coords[:, 3].to(voxel_features.dtype).unsqueeze(1) * self.voxel_x + self.x_offset)
-        f_center_y = voxel_features[:, :, 1] - (coords[:, 2].to(voxel_features.dtype).unsqueeze(1) * self.voxel_y + self.y_offset)
-        f_center_z = voxel_features[:, :, 2] - (coords[:, 1].to(voxel_features.dtype).unsqueeze(1) * self.voxel_z + self.z_offset)
-        f_center = torch.stack([f_center_x, f_center_y, f_center_z], dim=2)
-
-        if self.use_absolute_xyz:
-            features = [voxel_features, f_cluster, f_center]
-        else:
-            features = [voxel_features[..., 3:], f_cluster, f_center]
-
-        if self.with_distance:
-            points_dist = torch.norm(voxel_features[:, :, :3], 2, 2, keepdim=True)
-            features.append(points_dist)
-        features = torch.cat(features, dim=-1)
-
-        voxel_count = features.shape[1]
-        mask = self.get_paddings_indicator(voxel_num_points, voxel_count, axis=0)
-        mask = torch.unsqueeze(mask, 2).type_as(voxel_features)
-        features *= mask
+    def forward(self, gather_features: torch.Tensor) -> List[torch.Tensor]:
+        features = gather_features
         for pfn in self.pfn_layers:
             features = pfn(features)
-        features = features.squeeze()
 
         return features
