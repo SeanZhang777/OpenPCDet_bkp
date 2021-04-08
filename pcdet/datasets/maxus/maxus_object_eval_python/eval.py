@@ -30,7 +30,7 @@ def get_thresholds(scores: np.ndarray, num_gt, num_sample_pts=41):
 
 def clean_data(gt_anno, dt_anno, current_class, difficulty):
     CLASS_NAMES = [
-        'Car', 'Large_vehicle', 'Pedestrian', 'Cyclist'
+        'Car', 'Large_Vehicle', 'Pedestrian', 'Cyclist'
     ]
     dc_bboxes, ignored_gt, ignored_dt = [], [], []
     current_cls_name = CLASS_NAMES[current_class]
@@ -455,7 +455,7 @@ def get_mAP_eval_result(gt_annos,
     overlap_mod = np.array([[[0.7, 0.7, 0.5, 0.5]]])
     class_to_name = {
         0: 'Car',
-        1: 'Large_vehicle',
+        1: 'Large_Vehicle',
         2: 'Pedestrian',
         3: 'Cyclist'
     }
@@ -676,10 +676,10 @@ def get_maxus_eval_result(gt_annos,
     """
     overlap_mod = np.array([[[0.7, 0.7, 0.5, 0.5]]])
     class_to_name = {
-        0: 'car',
-        1: 'large_vehicle',
-        2: 'pedestrian',
-        3: 'cyclist'
+        0: 'Car',
+        1: 'Large_Vehicle',
+        2: 'Pedestrian',
+        3: 'Cyclist'
     }
     name_to_class = {v: n for n, v in class_to_name.items()}
     if not isinstance(current_classes, (list, tuple)):
