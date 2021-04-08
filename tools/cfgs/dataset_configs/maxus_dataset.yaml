@@ -1,7 +1,7 @@
 DATASET: 'MaxusDataset'
 DATA_PATH: '../data/maxus'
 
-POINT_CLOUD_RANGE: [-60, -60, -2, 60, 60, 4]
+POINT_CLOUD_RANGE: [-60.0, -32.0, -3.0, 60.0, 32.0, 5.0]
 
 DATA_SPLIT: {
     'train': train,
@@ -13,7 +13,7 @@ INFO_PATH: {
     'test': [maxus_infos_val.pkl],
 }
 
-BALANCED_RESAMPLING: True
+BALANCED_RESAMPLING: False
 
 DATA_AUGMENTOR:
     DISABLE_AUG_LIST: ['placeholder']
@@ -23,11 +23,11 @@ DATA_AUGMENTOR:
           DB_INFO_PATH:
               - maxus_dbinfos_train.pkl
           PREPARE: {
-             filter_by_min_points: ['Car:15', 'Large_vehicle:20', 'Pedestrian:5', 'Cyclist:5'],
-             filter_by_difficulty: [-1],
+             filter_by_min_points: ['Car:30', 'Large_Vehicle:50', 'Pedestrian:20', 'Cyclist:25'],
+             filter_by_difficulty: [2],
           }
 
-          SAMPLE_GROUPS: ['Car:3', 'Large_vehicle:2', 'Pedestrian: 5', 'Cyclist:5']
+          SAMPLE_GROUPS: ['Car:3', 'Large_Vehicle:2', 'Pedestrian: 5', 'Cyclist:5']
           NUM_POINT_FEATURES: 4
           DATABASE_WITH_FAKELIDAR: False
           REMOVE_EXTRA_WIDTH: [0.0, 0.0, 0.0]

@@ -8,14 +8,6 @@ from ...ops.roiaware_pool3d import roiaware_pool3d_utils
 from ...utils import box_utils, calibration_kitti, common_utils, object3d_kitti
 from ..dataset import DatasetTemplate
 
-point_num_threshold = {
-    'Car': 15,
-    'Large_vehicle': 20,
-    'Pedestrian': 5,
-    'Cyclist': 5,
-    'Others': 0,
-}
-
 class MaxusDataset(DatasetTemplate):
     def __init__(self, dataset_cfg, class_names, training=True, root_path=None, logger=None):
         """
@@ -118,7 +110,10 @@ class MaxusDataset(DatasetTemplate):
     def get_label(self, idx):
         label_file = self.root_split_path / 'label' / ('%s.txt' % idx)
         assert label_file.exists()
-        return np.genfromtxt(label_file).reshape(-1, 10)
+        with open(label_file, 'r') as f:
+            lines = f.readlines()
+        labels = np.array([line.strip().split() for line in lines])
+        return labels
 
     def get_calib(self, idx):
         calib_file = self.root_split_path / 'calib' / ('%s.txt' % idx)
@@ -172,25 +167,16 @@ class MaxusDataset(DatasetTemplate):
             info['point_cloud'] = pc_info
 
             if has_label:
-                name_mapping = {
-                    0: 'Car',
-                    1: 'Large_vehicle',
-                    2: 'Pedestrian',
-                    3: 'Cyclist',
-                    4: 'Others'
-                }
                 labels = self.get_label(sample_idx)
                 annotations = {}
-                annotations['name'] = np.array([name_mapping[int(id)] for id in labels[:, 0]])
-
+                annotations['name'] = np.array(labels[:, 0], dtype=np.str)
                 num_objects = len([name for name in annotations['name'] if name != 'Others'])
                 num_gt = len(annotations['name'])
                 index = list(range(num_objects)) + [-1] * (num_gt - num_objects)
                 annotations['index'] = np.array(index, dtype=np.int32)
-                gt_boxes_lidar = labels[:, 1:8]
+                gt_boxes_lidar = labels[:, 6:13].astype(np.float32)
                 annotations['gt_boxes_lidar'] = gt_boxes_lidar
-                annotations['trunct'] = labels[:, 8].astype(np.int32)
-                annotations['in_driving_area'] = labels[:, 9].astype(np.int32)
+                annotations['trunct'] = labels[:, 1].astype(np.int32)
                 annotations['difficulty'] = np.zeros(num_gt, dtype=np.int32)
                 info['annos'] = annotations
 
@@ -242,8 +228,6 @@ class MaxusDataset(DatasetTemplate):
             ).numpy()  # (nboxes, npoints)
 
             for i in range(num_obj):
-                if trunct[i] != 2 or num_points_in_gt[i] < point_num_threshold[names[i]]:
-                    continue
                 filename = '%s_%s_%d.bin' % (sample_idx, names[i], i)
                 filepath = database_save_path / filename
                 gt_points = points[point_indices[i] > 0]
