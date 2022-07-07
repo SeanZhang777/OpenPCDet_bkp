@@ -9,10 +9,12 @@ import matplotlib
 import numpy as np
 
 box_colormap = [
-    [1, 1, 1],
-    [0, 1, 0],
-    [0, 1, 1],
-    [1, 1, 0],
+    [1, 1, 1], # bg
+    [0, 1, 0], # car
+    [1, 0, 0], # bus
+    [1, 0.5, 0], # truck
+    [1, 1, 0], # ped
+    [0, 0, 1]  # cyc
 ]
 
 

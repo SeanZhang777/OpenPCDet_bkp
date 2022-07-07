@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import numba
-
+from ...ops.iou3d_nms import iou3d_nms_utils
 
 def gaussian_radius(height, width, min_overlap=0.5):
     """
@@ -66,8 +66,8 @@ def draw_gaussian_to_heatmap(heatmap, center, radius, k=1, valid_mask=None):
             masked_gaussian = masked_gaussian * cur_valid_mask.float()
 
         torch.max(masked_heatmap, masked_gaussian * k, out=masked_heatmap)
-    return heatmap
 
+    return heatmap
 
 def _nms(heat, kernel=3):
     pad = (kernel - 1) // 2
@@ -214,3 +214,35 @@ def decode_bbox_from_heatmap(heatmap, rot_cos, rot_sin, center, center_z, dim,
             'pred_labels': cur_labels
         })
     return ret_pred_dicts
+
+def get_iou_target(gt_boxes, pred_dict, indices,
+                   feature_map_stride, voxel_size, point_cloud_range):
+    num_gt = len(gt_boxes)
+    inds = indices[:num_gt].unsqueeze(0)
+    width, height = pred_dict['hm'].shape[-2], pred_dict['hm'].shape[-1]
+    ys = (inds // width).float()
+    xs = (inds % width).int().float()
+
+    center = _transpose_and_gather_feat(pred_dict['center'], inds).view(1, num_gt, 2)
+    rot_sin = _transpose_and_gather_feat(pred_dict['rot'][:, 0, :, :].unsqueeze(1), inds).view(1, num_gt, 1)
+    rot_cos = _transpose_and_gather_feat(pred_dict['rot'][:, 1, :, :].unsqueeze(1), inds).view(1, num_gt, 1)
+    center_z = _transpose_and_gather_feat(pred_dict['center_z'], inds).view(1, num_gt, 1)
+    dim = _transpose_and_gather_feat(pred_dict['dim'].exp(), inds).view(1, num_gt, 3)
+
+    angle = torch.atan2(rot_sin, rot_cos)
+    xs = xs.view(1, num_gt, 1) + center[:, :, 0:1]
+    ys = ys.view(1, num_gt, 1) + center[:, :, 1:2]
+
+    xs = xs * feature_map_stride * voxel_size[0] + point_cloud_range[0]
+    ys = ys * feature_map_stride * voxel_size[1] + point_cloud_range[1]
+
+    box_part_list = [xs, ys, center_z, dim, angle]
+
+
+    pred_boxes = torch.cat((box_part_list), dim=-1).squeeze()
+    iou = iou3d_nms_utils.boxes_iou_bev(pred_boxes, gt_boxes.cuda())
+    iou_target = torch.diag(iou).cpu()
+
+    iou_target = 2 * iou_target - 0.5
+    return iou_target
+
