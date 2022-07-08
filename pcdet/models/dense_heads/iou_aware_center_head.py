@@ -117,7 +117,7 @@ class IouAwareCenterHead(nn.Module):
         ret_boxes = gt_boxes.new_zeros((num_max_objs, gt_boxes.shape[-1] - 1 + 1))
         inds = gt_boxes.new_zeros(num_max_objs).long()
         mask = gt_boxes.new_zeros(num_max_objs).long()
-        ret_iou = gt_boxes.new_zeros(num_max_objs).long()
+        ret_iou = gt_boxes.new_zeros(num_max_objs)
         keypoint_map = gt_boxes.new_zeros(1, feature_map_size[1], feature_map_size[0])
 
         x, y, z = gt_boxes[:, 0], gt_boxes[:, 1], gt_boxes[:, 2]
@@ -310,7 +310,7 @@ class IouAwareCenterHead(nn.Module):
                 self.model_cfg.LOSS_CONFIG.LOSS_WEIGHTS['code_weights'][-1])).sum()
             iou_loss = iou_loss * self.model_cfg.LOSS_CONFIG.LOSS_WEIGHTS['loc_weight']
 
-            loss += hm_loss + loc_loss + kp_loss + iou_reg_loss
+            loss += hm_loss + loc_loss + kp_loss + iou_loss
             tb_dict['hm_loss_head_%d' % idx] = hm_loss.item()
             tb_dict['loc_loss_head_%d' % idx] = loc_loss.item()
             tb_dict['kp_loss_head_%d' % idx] = kp_loss.item()
