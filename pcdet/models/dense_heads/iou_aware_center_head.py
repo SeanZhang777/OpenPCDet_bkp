@@ -298,10 +298,11 @@ class IouAwareCenterHead(nn.Module):
             reg_loss = self.reg_loss_func(
                 pred_boxes, target_dicts['masks'][idx], target_dicts['inds'][idx], target_boxes
             )
-            loc_loss = (reg_loss * reg_loss.new_tensor(self.model_cfg.LOSS_CONFIG.LOSS_WEIGHTS['code_weights'][:8])).sum()
+            loc_loss = (reg_loss * reg_loss.new_tensor(self.model_cfg.LOSS_CONFIG.LOSS_WEIGHTS['code_weights'][:-1])).sum()
             loc_loss = loc_loss * self.model_cfg.LOSS_CONFIG.LOSS_WEIGHTS['loc_weight']
 
             target_iou = target_dicts['target_ious'][idx]
+            pred_dict['iou'] = self.sigmoid(pred_dict['iou'])
             iou_reg_loss = self.reg_loss_func(
                 pred_dict['iou'], target_dicts['masks'][idx], target_dicts['inds'][idx], target_iou
             )
@@ -330,7 +331,7 @@ class IouAwareCenterHead(nn.Module):
         } for k in range(batch_size)]
         for idx, pred_dict in enumerate(pred_dicts):
             batch_hm = pred_dict['hm'].sigmoid()
-            batch_iou = (pred_dict['iou'] + 0.5) / 2.0
+            batch_iou = pred_dict['iou'].sigmoid()
             batch_hm = torch.pow(batch_hm, 1 - rescore_weight) * torch.pow(batch_iou, rescore_weight)
             batch_center = pred_dict['center']
             batch_center_z = pred_dict['center_z']

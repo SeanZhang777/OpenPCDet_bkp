@@ -244,5 +244,6 @@ def get_iou_target(gt_boxes, pred_dict, indices,
     iou_target = torch.diag(iou).cpu()
 
     iou_target = 2 * iou_target - 0.5
+    iou_target = torch.clamp(iou_target, min=0.0, max=1.0)
     return iou_target
 
