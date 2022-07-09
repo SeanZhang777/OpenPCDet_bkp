@@ -174,10 +174,11 @@ class IouAwareCenterHead(nn.Module):
 
             # draw keypoint_map
             centernet_utils.draw_gaussian_to_heatmap(keypoint_map[0], center[k], key_points_radius[k].item())
-            for i in range(4):
-                if not (0 <= corners_int[k][i][0] <= feature_map_size[0] and 0 <= corners_int[k][i][1] <= feature_map_size[1]):
-                    continue
-                centernet_utils.draw_gaussian_to_heatmap(keypoint_map[0], corners[k][i], key_points_radius[k].item())
+            if cur_class_id.item() not in [3, 4]:
+                for i in range(4):
+                    if not (0 <= corners_int[k][i][0] <= feature_map_size[0] and 0 <= corners_int[k][i][1] <= feature_map_size[1]):
+                        continue
+                    centernet_utils.draw_gaussian_to_heatmap(keypoint_map[0], corners[k][i], key_points_radius[k].item())
 
             inds[k] = center_int[k, 1] * feature_map_size[0] + center_int[k, 0]
             mask[k] = 1

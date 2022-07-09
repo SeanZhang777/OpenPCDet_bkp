@@ -224,8 +224,8 @@ def get_iou_target(gt_boxes, pred_dict, indices,
     xs = (inds % width).int().float()
 
     center = _transpose_and_gather_feat(pred_dict['center'], inds).view(1, num_gt, 2)
-    rot_sin = _transpose_and_gather_feat(pred_dict['rot'][:, 0, :, :].unsqueeze(1), inds).view(1, num_gt, 1)
-    rot_cos = _transpose_and_gather_feat(pred_dict['rot'][:, 1, :, :].unsqueeze(1), inds).view(1, num_gt, 1)
+    rot_cos = _transpose_and_gather_feat(pred_dict['rot'][:, 0, :, :].unsqueeze(1), inds).view(1, num_gt, 1)
+    rot_sin = _transpose_and_gather_feat(pred_dict['rot'][:, 1, :, :].unsqueeze(1), inds).view(1, num_gt, 1)
     center_z = _transpose_and_gather_feat(pred_dict['center_z'], inds).view(1, num_gt, 1)
     dim = _transpose_and_gather_feat(pred_dict['dim'].exp(), inds).view(1, num_gt, 3)
 
