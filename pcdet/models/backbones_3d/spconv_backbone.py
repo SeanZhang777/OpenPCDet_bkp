@@ -26,7 +26,6 @@ def post_act_block(in_channels, out_channels, kernel_size, indice_key=None, stri
 
     return m
 
-
 class SparseBasicBlock(spconv.SparseModule):
     expansion = 1
 
@@ -64,7 +63,6 @@ class SparseBasicBlock(spconv.SparseModule):
         out = replace_feature(out, self.relu(out.features))
 
         return out
-
 
 class VoxelBackBone8x(nn.Module):
     def __init__(self, model_cfg, input_channels, grid_size, **kwargs):
@@ -123,8 +121,6 @@ class VoxelBackBone8x(nn.Module):
             'x_conv4': 64
         }
 
-
-
     def forward(self, batch_dict):
         """
         Args:
@@ -178,7 +174,6 @@ class VoxelBackBone8x(nn.Module):
         })
 
         return batch_dict
-
 
 class VoxelResBackBone8x(nn.Module):
     def __init__(self, model_cfg, input_channels, grid_size, **kwargs):

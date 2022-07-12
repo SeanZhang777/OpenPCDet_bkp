@@ -11,6 +11,7 @@ from .waymo.waymo_dataset import WaymoDataset
 from .pandaset.pandaset_dataset import PandasetDataset
 from .lyft.lyft_dataset import LyftDataset
 from .neolix.neolix_dataset import NeolixDataset
+from .once.once_dataset import ONCEDataset
 
 __all__ = {
     'DatasetTemplate': DatasetTemplate,
@@ -20,6 +21,7 @@ __all__ = {
     'PandasetDataset': PandasetDataset,
     'LyftDataset': LyftDataset,
     'NeolixDataset': NeolixDataset,
+    'ONCEDataset': ONCEDataset
 }
 
 
