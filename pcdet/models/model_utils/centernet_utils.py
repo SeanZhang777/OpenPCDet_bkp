@@ -219,7 +219,7 @@ def get_iou_target(gt_boxes, pred_dict, indices,
                    feature_map_stride, voxel_size, point_cloud_range):
     num_gt = len(gt_boxes)
     inds = indices[:num_gt].unsqueeze(0)
-    width, height = pred_dict['hm'].shape[-2], pred_dict['hm'].shape[-1]
+    height, width = pred_dict['hm'].shape[-2], pred_dict['hm'].shape[-1]
     ys = (inds // width).float()
     xs = (inds % width).int().float()
 

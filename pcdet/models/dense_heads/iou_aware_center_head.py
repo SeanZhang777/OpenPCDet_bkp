@@ -98,7 +98,9 @@ class IouAwareCenterHead(nn.Module):
 
     def build_losses(self):
         self.add_module('hm_loss_func', loss_utils.FocalLossCenterNet())
+        self.add_module('kp_loss_func', loss_utils.FocalLossCenterNet())
         self.add_module('reg_loss_func', loss_utils.RegLossCenterNet())
+        self.add_module('iou_loss_func', loss_utils.RegLossCenterNet())
 
     def assign_target_of_single_head(
             self, num_classes, gt_boxes, pred_dict,
@@ -289,7 +291,7 @@ class IouAwareCenterHead(nn.Module):
             hm_loss *= self.model_cfg.LOSS_CONFIG.LOSS_WEIGHTS['cls_weight']
 
             pred_dict['keypoints'] = self.sigmoid(pred_dict['keypoints'])
-            kp_loss = self.hm_loss_func(pred_dict['keypoints'], target_dicts['keypoint_maps'][idx])
+            kp_loss = self.kp_loss_func(pred_dict['keypoints'], target_dicts['keypoint_maps'][idx])
             kp_loss *= self.model_cfg.LOSS_CONFIG.LOSS_WEIGHTS['keypoint_weight']
 
             target_boxes = target_dicts['target_boxes'][idx]
@@ -304,7 +306,7 @@ class IouAwareCenterHead(nn.Module):
 
             target_iou = target_dicts['target_ious'][idx]
             pred_dict['iou'] = self.sigmoid(pred_dict['iou'])
-            iou_reg_loss = self.reg_loss_func(
+            iou_reg_loss = self.iou_loss_func(
                 pred_dict['iou'], target_dicts['masks'][idx], target_dicts['inds'][idx], target_iou
             )
             iou_loss = (iou_reg_loss * iou_reg_loss.new_tensor(
