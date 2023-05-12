@@ -170,7 +170,7 @@ def _topk(scores, K=40):
     return topk_score, topk_inds, topk_classes, topk_ys, topk_xs
 
 
-def decode_bbox_from_heatmap(heatmap, rot_cos, rot_sin, center, center_z, dim,
+def decode_bbox_from_heatmap(heatmap, rot_cos, rot_sin, center, center_z, dim, iou=None,
                              point_cloud_range=None, voxel_size=None, feature_map_stride=None, vel=None, K=100,
                              circle_nms=False, score_thresh=None, post_center_limit_range=None):
     batch_size, num_class, _, _ = heatmap.size()
@@ -195,6 +195,11 @@ def decode_bbox_from_heatmap(heatmap, rot_cos, rot_sin, center, center_z, dim,
     ys = ys * feature_map_stride * voxel_size[1] + point_cloud_range[1]
 
     box_part_list = [xs, ys, center_z, dim, angle]
+
+    if iou is not None:
+        iou = _transpose_and_gather_feat(iou, inds).view(batch_size, K, 1)
+        iou = torch.clamp(iou, min=0, max=1.)
+
     if vel is not None:
         vel = _transpose_and_gather_feat(vel, inds).view(batch_size, K, 2)
         box_part_list.append(vel)
@@ -208,7 +213,10 @@ def decode_bbox_from_heatmap(heatmap, rot_cos, rot_sin, center, center_z, dim,
     mask &= (final_box_preds[..., :3] <= post_center_limit_range[3:]).all(2)
 
     if score_thresh is not None:
-        mask &= (final_scores > score_thresh)
+        if isinstance(score_thresh, list):
+            mask &= (final_scores > torch.from_numpy(np.array(score_thresh)[final_class_ids.cpu()]).to(mask.device))
+        else:
+            mask &= (final_scores > score_thresh)
 
     ret_pred_dicts = []
     for k in range(batch_size):
@@ -216,6 +224,7 @@ def decode_bbox_from_heatmap(heatmap, rot_cos, rot_sin, center, center_z, dim,
         cur_boxes = final_box_preds[k, cur_mask]
         cur_scores = final_scores[k, cur_mask]
         cur_labels = final_class_ids[k, cur_mask]
+        cur_iou = iou[k, cur_mask] if not iou is None else None
 
         if circle_nms:
             assert False, 'not checked yet'
@@ -230,7 +239,8 @@ def decode_bbox_from_heatmap(heatmap, rot_cos, rot_sin, center, center_z, dim,
         ret_pred_dicts.append({
             'pred_boxes': cur_boxes,
             'pred_scores': cur_scores,
-            'pred_labels': cur_labels
+            'pred_labels': cur_labels,
+            'pred_ious': cur_iou
         })
     return ret_pred_dicts
 
